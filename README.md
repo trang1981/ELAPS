@@ -1,5 +1,591 @@
 # ELAPS
 Official implementation of ELAPS: an event-based leakage-aware propensity-scoring framework for credit-card cross-selling in retail banking.
+# ELAPS: Event-Based Leakage-Aware Propensity Scoring
+
+This repository contains the experimental implementation of the study:
+
+> **ELAPS: A Leakage-Audited Machine Learning Framework for Credit-Card Cross-Sell Propensity Prediction in Retail Banking**
+
+ELAPS is designed to evaluate credit-card cross-sell propensity models under deployment-faithful conditions. The framework combines event-based feature construction, leakage auditing, placebo diagnostics, Forward-Looking Deployment Cohort evaluation, external validation, model interpretation, and fairness analysis.
+
+---
+
+## 1. Research Objective
+
+The main objective of this study is to develop and evaluate a leakage-aware machine learning framework for credit-card cross-sell propensity prediction in retail banking.
+
+Conventional propensity models may report overly optimistic performance when feature windows, customer lifecycles, or cohort definitions differ between adopters and non-adopters. ELAPS addresses this problem through a structured evaluation process that distinguishes feature-level point-in-time correctness from cohort-level performance inflation.
+
+The study has five main objectives:
+
+1. Construct customer-level predictors using event-anchored temporal cutoffs.
+2. Prevent post-adoption information from entering the feature set.
+3. Diagnose potential performance inflation using label-shuffling, feature ablation, observation-window sensitivity, and placebo-cutoff experiments.
+4. estimate deployment-faithful performance through the Forward-Looking Deployment Cohort, or FLDC.
+5. Assess the transferability of the framework using both an internal VIB banking dataset and the Santander Product Recommendation dataset.
+
+The main experimental components are:
+
+- event-based feature construction;
+- point-in-time correct preprocessing;
+- XGBoost and LightGBM modeling;
+- random oversampling and alternative imbalance treatments;
+- feature and feature-family ablation;
+- label-shuffling sanity checks;
+- placebo-cutoff analysis;
+- FLDC evaluation at multiple observation horizons;
+- SHAP-based interpretation;
+- fairness evaluation by sex and age group;
+- cross-dataset validation;
+- cross-model performance-ladder analysis.
+
+---
+
+## 2. Repository Structure
+
+```text
+.
+├── README.md
+├── requirements.txt
+└── Notebooks/
+    ├── VIB_Dataprocessing.ipynb
+    ├── VIB_ELAPS.ipynb
+    ├── VIB_LIGHTGBM_ROS.ipynb
+    ├── VIB_PLACEBO.ipynb
+    ├── VIB30cutoffngay.ipynb
+    ├── VIB60cutoffngay.ipynb
+    ├── VIB_cutoff90ngay.ipynb
+    ├── VIB180cutoffngay.ipynb
+    ├── Santander_ELAPS.ipynb
+    ├── Santander_PLACEBO.ipynb
+    ├── Santander60cutoff.ipynb
+    └── Santander90cutoff.ipynb
+```
+
+### Notebook descriptions
+
+| Notebook | Purpose |
+|---|---|
+| `VIB_Dataprocessing.ipynb` | Cleans and integrates the internal VIB data, constructs event-anchored features, defines labels, and produces the analytical dataset. |
+| `VIB_ELAPS.ipynb` | Runs the main ELAPS experiment on VIB, including model comparison, resampling, evaluation, SHAP analysis, ablation, and ranking metrics. |
+| `VIB_LIGHTGBM_ROS.ipynb` | Evaluates LightGBM with Random Oversampling and reproduces the cross-model performance ladder. |
+| `VIB_PLACEBO.ipynb` | Runs placebo-cutoff experiments to diagnose observation-window-related performance inflation. |
+| `VIB30cutoffngay.ipynb` | Runs FLDC with a fixed 30-day observation window. |
+| `VIB60cutoffngay.ipynb` | Runs the main FLDC-60D evaluation used as the default deployment-faithful configuration. |
+| `VIB_cutoff90ngay.ipynb` | Runs FLDC with a fixed 90-day observation window. |
+| `VIB180cutoffngay.ipynb` | Runs FLDC with a fixed 180-day observation window. |
+| `Santander_ELAPS.ipynb` | Applies the ELAPS pipeline to the Santander Product Recommendation dataset. |
+| `Santander_PLACEBO.ipynb` | Runs placebo-cutoff analysis on Santander. |
+| `Santander60cutoff.ipynb` | Runs Santander FLDC with a fixed 60-day observation window. |
+| `Santander90cutoff.ipynb` | Runs Santander FLDC with a fixed 90-day observation window. |
+
+---
+
+## 3. Installation
+
+### 3.1 Recommended environment
+
+- Python 3.10 or later
+- Jupyter Notebook, JupyterLab, or Google Colab
+- At least 8 GB RAM recommended
+- Additional memory may be required for the full Santander dataset
+
+### 3.2 Clone the repository
+
+```bash
+git clone <repository-url>
+cd <repository-name>
+```
+
+Replace `<repository-url>` and `<repository-name>` with the actual GitHub repository information.
+
+### 3.3 Create a virtual environment
+
+Using `venv`:
+
+```bash
+python -m venv elaps-env
+```
+
+Activate the environment.
+
+On Windows:
+
+```bash
+elaps-env\Scripts\activate
+```
+
+On macOS or Linux:
+
+```bash
+source elaps-env/bin/activate
+```
+
+### 3.4 Install dependencies
+
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+A suitable `requirements.txt` is:
+
+```text
+numpy>=1.24
+pandas>=2.0
+scipy>=1.11
+scikit-learn>=1.3
+xgboost>=2.0
+lightgbm>=4.0
+imbalanced-learn>=0.11
+shap>=0.45
+matplotlib>=3.8
+seaborn>=0.13
+joblib>=1.3
+tqdm>=4.66
+notebook>=7.0
+jupyterlab>=4.0
+ipykernel>=6.0
+openpyxl>=3.1
+xlrd>=2.0
+statsmodels>=0.14
+optuna>=3.6
+```
+
+If the notebooks were originally executed in Google Colab, some packages may already be preinstalled. The installation cell should still be executed to ensure package compatibility.
+
+---
+
+## 4. Running the Notebooks
+
+### 4.1 Run locally with Jupyter Notebook
+
+Start Jupyter:
+
+```bash
+jupyter notebook
+```
+
+Open the `Notebooks` directory and run the notebooks in the sequence described below.
+
+### 4.2 Run with JupyterLab
+
+```bash
+jupyter lab
+```
+
+### 4.3 Run with Google Colab
+
+Each notebook can also be uploaded to Google Colab.
+
+Recommended steps:
+
+1. Open Google Colab.
+2. Upload or open the selected notebook from GitHub.
+3. Mount Google Drive if the input data are stored there.
+4. Update all data paths before execution.
+5. Run the notebook from the first cell to the final cell.
+6. Save the executed notebook or exported result tables.
+
+Example for mounting Google Drive:
+
+```python
+from google.colab import drive
+drive.mount('/content/drive')
+```
+
+### 4.4 Recommended execution order
+
+#### VIB experiments
+
+Run the notebooks in the following order:
+
+```text
+1. VIB_Dataprocessing.ipynb
+2. VIB_ELAPS.ipynb
+3. VIB_LIGHTGBM_ROS.ipynb
+4. VIB_PLACEBO.ipynb
+5. VIB30cutoffngay.ipynb
+6. VIB60cutoffngay.ipynb
+7. VIB_cutoff90ngay.ipynb
+8. VIB180cutoffngay.ipynb
+```
+
+#### Santander experiments
+
+```text
+1. Santander_ELAPS.ipynb
+2. Santander_PLACEBO.ipynb
+3. Santander60cutoff.ipynb
+4. Santander90cutoff.ipynb
+```
+
+The VIB and Santander pipelines are independent after their respective data preparation steps.
+
+---
+
+## 5. Reproducing the Results
+
+### 5.1 General reproducibility procedure
+
+To reproduce the reported results:
+
+1. Install the required Python packages.
+2. Place the authorized input files in the expected data directory.
+3. Update all local or Google Drive paths inside the notebooks.
+4. Execute each notebook from top to bottom without skipping cells.
+5. Use the same random seeds specified in the notebooks.
+6. Preserve the same train-test split, preprocessing steps, feature definitions, and model parameters.
+7. Record the final output tables and figures generated by each notebook.
+
+### 5.2 Main experimental sequence
+
+The study follows the sequence below:
+
+```text
+Raw data
+   ↓
+Data cleaning and temporal validation
+   ↓
+Event-anchored feature construction
+   ↓
+Conventional full-cohort evaluation
+   ↓
+Feature ablation and observation-window sensitivity
+   ↓
+Label-shuffling and placebo-cutoff diagnostics
+   ↓
+FLDC evaluation at multiple horizons
+   ↓
+Cross-model robustness
+   ↓
+External validation on Santander
+   ↓
+Fairness and explainability analysis
+```
+
+### 5.3 Reproducing the main VIB results
+
+Run:
+
+```text
+VIB_Dataprocessing.ipynb
+VIB_ELAPS.ipynb
+VIB_PLACEBO.ipynb
+VIB60cutoffngay.ipynb
+VIB_LIGHTGBM_ROS.ipynb
+```
+
+These notebooks reproduce the main components of the study:
+
+- event-anchored ELAPS performance;
+- XGBoost + Random Oversampling results;
+- LightGBM + Random Oversampling robustness results;
+- label-shuffling sanity checks;
+- placebo-cutoff analysis;
+- dominant-feature and feature-family ablation;
+- FLDC-60D deployment-faithful evaluation;
+- SHAP feature importance;
+- ranking metrics;
+- fairness metrics.
+
+### 5.4 Reproducing horizon sensitivity
+
+Run:
+
+```text
+VIB30cutoffngay.ipynb
+VIB60cutoffngay.ipynb
+VIB_cutoff90ngay.ipynb
+VIB180cutoffngay.ipynb
+```
+
+The notebooks compare:
+
+- cohort size;
+- excluded early adopters;
+- positive count;
+- base rate;
+- AUC;
+- KS statistic;
+- accuracy;
+- precision;
+- recall;
+- F1-score;
+- Brier score;
+- Precision@10%;
+- Capture@10%;
+- Lift@10%;
+- cross-validation stability, where reported.
+
+The 60-day configuration is used as the default FLDC setting in the manuscript because it preserves a larger eligible cohort while achieving discrimination close to the 90-day configuration.
+
+### 5.5 Reproducing the performance ladder
+
+The leakage-audit performance ladder is constructed from progressively stricter evaluation configurations:
+
+| Level | Configuration | Main purpose |
+|---|---|---|
+| L0 | Conventional full-cohort evaluation | Baseline estimate before stricter leakage controls |
+| L1 | Event-anchored ELAPS | Removes feature-level post-adoption leakage |
+| L2 | Dominant-feature or account-feature ablation | Tests dependence on highly informative account variables |
+| L3 | Placebo-cutoff evaluation | Reduces class-dependent observation-window advantage |
+| L4 | FLDC-60D | Estimates deployment-faithful future-adoption performance |
+
+The XGBoost and LightGBM notebooks provide the cross-model comparison for this ladder.
+
+### 5.6 Reproducing Santander external validation
+
+Run:
+
+```text
+Santander_ELAPS.ipynb
+Santander_PLACEBO.ipynb
+Santander60cutoff.ipynb
+Santander90cutoff.ipynb
+```
+
+These notebooks reproduce:
+
+- event-anchored Santander ELAPS results;
+- placebo-cutoff results across repeated seeds;
+- FLDC-60D performance;
+- FLDC-90D horizon sensitivity;
+- ranking performance;
+- SHAP interpretation;
+- fairness metrics by sex and age group.
+
+### 5.7 Main evaluation metrics
+
+The repository reports the following metrics where applicable.
+
+#### Discrimination
+
+- Area Under the ROC Curve
+- ROC curve
+- Kolmogorov-Smirnov statistic
+- cross-validation mean AUC
+- cross-validation standard deviation
+- bootstrap confidence intervals
+- DeLong comparison
+
+#### Classification
+
+- accuracy
+- precision
+- recall
+- F1-score
+- specificity
+- confusion matrix
+- classification report
+
+#### Probability quality
+
+- Brier score
+- calibration curve
+- group-specific Brier score
+
+#### Ranking and campaign performance
+
+- Precision@10%
+- Precision@20%
+- Precision@30%
+- Capture@10%
+- Capture@20%
+- Capture@30%
+- Lift@10%
+- Lift@20%
+- Lift@30%
+- cumulative gain
+- cumulative lift
+- score-decile response rate
+
+#### Leakage diagnostics
+
+- label-shuffling AUC
+- feature-ablation performance change
+- placebo-cutoff performance change
+- observation-window sensitivity
+- FLDC performance change
+- cross-model agreement
+
+#### Fairness
+
+- group sample size
+- group base rate
+- group-specific AUC
+- group-specific Brier score
+- true-positive rate at a fixed threshold
+- selection rate at a fixed threshold
+- true-positive rate among the top 20%
+- disparate-impact ratio
+- TPR gap
+- selection-rate gap
+- AUC gap
+- Brier-score gap
+
+#### Explainability
+
+- SHAP global feature importance
+- mean absolute SHAP value
+- SHAP summary plots
+- feature-effect direction
+- feature ranking
+
+### 5.8 Reproducibility limitations
+
+Exact numerical reproduction of the internal VIB results requires:
+
+- access to the same confidential source data;
+- identical preprocessing rules;
+- identical date fields and customer identifiers;
+- identical software versions;
+- identical random seeds;
+- sufficient computational resources.
+
+Small numerical differences may occur across operating systems, package versions, or hardware configurations, particularly for tree-based models and parallel execution.
+
+---
+
+## 6. Data Information
+
+### 6.1 VIB dataset
+
+The internal dataset contains customer-level information from a retail banking environment.
+
+The source data include information related to:
+
+- customer demographics;
+- current-account relationships;
+- term-deposit relationships;
+- loan relationships;
+- transaction activity;
+- account balances;
+- digital-banking usage;
+- credit-card adoption events.
+
+The final analytical dataset contains customer-level predictors constructed before the customer-specific temporal cutoff.
+
+Examples of modeled feature groups include:
+
+- age and sex;
+- electronic-banking registration channel;
+- SMS usage;
+- verification method;
+- login activity;
+- current-account count and balance;
+- term-deposit count and balance;
+- loan count and loan amounts;
+- transaction level and category;
+- transaction amount statistics.
+
+#### VIB target definition
+
+A positive customer is a customer who opens at least one credit card during the study period.
+
+A negative customer is a customer who does not open a credit card during the study period.
+
+#### VIB temporal cutoff
+
+For an adopter, the cutoff is the first credit-card opening date:
+
+```text
+cutoff = first credit-card opening date
+```
+
+For a non-adopter, the cutoff is the last observed transaction date in the study year:
+
+```text
+cutoff = last observed transaction date
+```
+
+All predictors are constructed using information available on or before the valid cutoff defined in the notebook.
+
+### 6.2 Forward-Looking Deployment Cohort
+
+The FLDC experiments use a fixed observation window after customer relationship start.
+
+For a horizon of \(h\) days:
+
+1. Features are constructed using only the first \(h\) days.
+2. Customers adopting during the first \(h\) days are excluded.
+3. The target is adoption strictly after day \(h\).
+4. Positive and negative customers receive the same feature-window length.
+
+The repository contains VIB FLDC experiments for:
+
+- 30 days;
+- 60 days;
+- 90 days;
+- 180 days.
+
+The repository contains Santander FLDC experiments for:
+
+- 60 days;
+- 90 days.
+
+### 6.3 Santander dataset
+
+The external validation uses the Santander Product Recommendation dataset.
+
+The dataset contains monthly customer records and banking-product ownership indicators. The notebooks identify the relevant credit-card adoption event and construct customer-level predictors using the temporal rules defined by ELAPS.
+
+The public Santander data are not included in this repository. Users must download the dataset from its authorized source and update the input paths in the notebooks.
+
+### 6.4 Data availability statement
+
+The internal VIB dataset contains confidential banking and customer information and cannot be publicly released because of privacy, contractual, and institutional restrictions.
+
+This repository therefore provides:
+
+- the experimental notebooks;
+- preprocessing logic;
+- model-training procedures;
+- leakage-audit procedures;
+- FLDC cohort construction;
+- evaluation code;
+- fairness analysis;
+- explainability analysis.
+
+Reproduction of the internal VIB results requires authorized access to the original data or to an equivalent dataset with compatible fields.
+
+No confidential customer-level data should be uploaded to the public repository.
+
+---
+
+## Citation
+
+If this repository supports your research, please cite the associated paper:
+
+```bibtex
+@article{tran2026elaps,
+  title   = {ELAPS: A Leakage-Audited Machine Learning Framework for Credit-Card Cross-Sell Propensity Prediction in Retail Banking},
+  author  = {Tran, Thu Trang and co-authors},
+  journal = {Submitted},
+  year    = {2026}
+}
+```
+
+The citation information should be updated after the paper is accepted or published.
+
+---
+
+## License
+
+The source code and notebooks are provided for academic and non-commercial research purposes.
+
+The banking data are not covered by this repository license and remain subject to the data owner's confidentiality and usage restrictions.
+
+---
+
+## Contact
+
+**Tran Thu Trang**  
+Faculty of Information Technology  
+Dai Nam University  
+Hanoi, Vietnam  
+
+Email: `trangtt@dainam.edu.vn`
 ## Experiments and Evaluation Metrics
 
 This repository contains the complete experimental workflow used to develop, audit, and evaluate the ELAPS framework. The experiments cover data preprocessing, conventional propensity modeling, leakage diagnostics, deployment-faithful cohort construction, horizon sensitivity, external validation, explainability, fairness, and cross-model robustness.
