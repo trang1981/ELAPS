@@ -21,6 +21,7 @@ ELAPS is an **evaluation methodology**, not a new prediction algorithm. XGBoost 
 - Label-shuffle/permutation sanity checks
 - Placebo-cutoff diagnostics
 - Forward-Looking Deployment Cohorts at 30, 60, 90, and 180 days
+- Dedicated preparation of the Branch B and Branch C datasets
 - Same-population A-B-C decomposition
 - Comparison of XGBoost without resampling and XGBoost with random oversampling
 - Relationship-start cohort robustness check (E6a)
@@ -41,7 +42,8 @@ flowchart TD
     C --> D[Retrospective ELAPS evaluation]
     D --> E[Leakage and robustness audits]
     E --> F[FLDC evaluation]
-    F --> G[Same-population decomposition]
+    F --> J[Prepare Branch B and C datasets]
+    J --> G[Same-population decomposition]
     G --> H[External replication]
     H --> I[Explainability and fairness reporting]
 ```
@@ -54,23 +56,26 @@ flowchart TD
 ELAPS/
 ├── README.md
 ├── requirements.txt
-├── 01_VIB_Data_Preprocessing.ipynb
-├── 02_VIB_ELAPS.ipynb
-├── 03_VIB_Placebo.ipynb
-├── 04_VIB_FLDC_30D.ipynb
-├── 05_VIB_FLDC_60D.ipynb
-├── 06_VIB_FLDC_90D.ipynb
-├── 07_VIB_FLDC_180D.ipynb
-├── 08_VIB_LightGBM_ROS.ipynb
-├── 09_Santander_ELAPS.ipynb
-├── 10_Santander_Placebo.ipynb
-├── 11_Santander_FLDC_60D.ipynb
-├── 12_Santander_FLDC_90D.ipynb
-├── 13_VIB60ABC.ipynb
+├── Notebooks/
+│   ├── 01_VIB_Dataprocessing.ipynb
+│   ├── 02_VIB_ELAPS.ipynb
+│   ├── 03_VIB_Placebo.ipynb
+│   ├── 04_VIB_FLDC_30D.ipynb
+│   ├── 05_VIB_FLDC_60D.ipynb
+│   ├── 06_VIB_FLDC_90D.ipynb
+│   ├── 07_VIB_FLDC_180D.ipynb
+│   ├── 08_VIB_LightGBM_ROS.ipynb
+│   ├── 09_Santander_ELAPS.ipynb
+│   ├── 10_Santander_Placebo.ipynb
+│   ├── 11_Santander_FLDC_60D.ipynb
+│   ├── 12_Santander_FLDC_90D.ipynb
+│   ├── 13_VIB60ABC.ipynb
+│   ├── 14_VIB_FLDC_60D_B.ipynb
+│   └── 15_VIB_FLDC_60D_C.ipynb
 └── data/
 ```
 
-The `data/` directory is not populated in the public repository because the VIB data are confidential and the Santander data remain subject to their original distribution terms.
+The repository currently contains 15 notebooks under `Notebooks/`. The `data/` directory is not populated in the public repository because the VIB data are confidential and the Santander data remain subject to their original distribution terms.
 
 ---
 
@@ -78,7 +83,7 @@ The `data/` directory is not populated in the public repository because the VIB 
 
 | Notebook | Purpose |
 |---|---|
-| `01_VIB_Data_Preprocessing.ipynb` | Cleans and links the VIB source tables, validates dates, and prepares the event-anchored and landmark datasets used by downstream notebooks. |
+| `01_VIB_Dataprocessing.ipynb` | Cleans and links the VIB source tables, validates dates, and prepares the core event-anchored and landmark inputs used by downstream notebooks. |
 | `02_VIB_ELAPS.ipynb` | Runs the main retrospective ELAPS experiment and the embedded permutation, calibration, Brier Skill Score, fairness, ablation, SHAP, and bootstrap analyses. |
 | `03_VIB_Placebo.ipynb` | Applies the VIB placebo-cutoff diagnostic to test sensitivity to observation-window construction. |
 | `04_VIB_FLDC_30D.ipynb` | Builds and evaluates the 30-day VIB FLDC sensitivity configuration. |
@@ -90,7 +95,9 @@ The `data/` directory is not populated in the public repository because the VIB 
 | `10_Santander_Placebo.ipynb` | Repeats the placebo-cutoff diagnostic on Santander data. |
 | `11_Santander_FLDC_60D.ipynb` | Runs the 60-day Santander FLDC-style external replication. |
 | `12_Santander_FLDC_90D.ipynb` | Runs the 90-day Santander FLDC-style sensitivity analysis. |
-| `13_VIB60ABC.ipynb` | Runs the A-B-C decomposition, XGBoost None-versus-ROS comparison, and relationship-start cohort split (E6a). |
+| `13_VIB60ABC.ipynb` | Loads the prepared Branch A, B, and C datasets and runs the A-B-C decomposition, XGBoost None-versus-ROS comparison, and relationship-start cohort split (E6a). |
+| `14_VIB_FLDC_60D_B.ipynb` | Constructs and validates the Branch B dataset required by the 60-day A-B-C decomposition. |
+| `15_VIB_FLDC_60D_C.ipynb` | Constructs and validates the Branch C dataset required by the 60-day A-B-C decomposition. |
 
 ### Analyses contained in `02_VIB_ELAPS.ipynb`
 
@@ -105,7 +112,13 @@ In addition to the main retrospective model, this notebook contains:
 
 ### Analyses contained in `13_VIB60ABC.ipynb`
 
-This notebook contains three distinct analyses:
+This notebook is the downstream analysis notebook for the 60-day A-B-C experiment. Before running it, prepare the required inputs as follows:
+
+- Branch A is obtained from the primary 60-day FLDC workflow in `05_VIB_FLDC_60D.ipynb`.
+- Branch B is constructed in `14_VIB_FLDC_60D_B.ipynb`.
+- Branch C is constructed in `15_VIB_FLDC_60D_C.ipynb`.
+
+Notebooks 14 and 15 perform data construction and validation; they do not replace the comparative modelling and decomposition performed in notebook 13. After all three branch datasets are available, notebook 13 runs the following analyses:
 
 1. **Same-population A-B-C decomposition**
    - Configuration A: fixed 60-day predictors on the FLDC-eligible population.
@@ -175,7 +188,7 @@ Before execution, update the dataset paths and output directory in each notebook
 
 Run the notebooks in the following order:
 
-1. `01_VIB_Data_Preprocessing.ipynb`
+1. `01_VIB_Dataprocessing.ipynb`
 2. `02_VIB_ELAPS.ipynb`
 3. `03_VIB_Placebo.ipynb`
 4. `05_VIB_FLDC_60D.ipynb`
@@ -183,9 +196,11 @@ Run the notebooks in the following order:
 6. `06_VIB_FLDC_90D.ipynb`
 7. `07_VIB_FLDC_180D.ipynb`
 8. `08_VIB_LightGBM_ROS.ipynb`
-9. `13_VIB60ABC.ipynb`
+9. `14_VIB_FLDC_60D_B.ipynb`
+10. `15_VIB_FLDC_60D_C.ipynb`
+11. `13_VIB60ABC.ipynb`
 
-Notebook 05 provides the primary FLDC result. Notebooks 04, 06, and 07 are observation-window sensitivity analyses and may be run in any order after preprocessing.
+Notebook 05 provides the primary FLDC result. Notebooks 04, 06, and 07 are observation-window sensitivity analyses and may be run in any order after preprocessing. For the A-B-C analysis, run notebooks 14 and 15 after the core ELAPS and 60-day FLDC datasets have been prepared, and then run notebook 13 last.
 
 ### External Santander workflow
 
@@ -306,5 +321,4 @@ Dai Nam University, Hanoi, Vietnam
 Email: [trangtt@dainam.edu.vn](mailto:trangtt@dainam.edu.vn)
 
 For technical questions or reproducibility issues, please open an issue at [github.com/trang1981/ELAPS/issues](https://github.com/trang1981/ELAPS/issues).
-
 
