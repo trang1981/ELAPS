@@ -18,7 +18,7 @@ Branches (feature-window rules; strict-before cutoffs)
   Bsym       : pos t = e ; neg t = min(r + P, T), P ~ training-positive delays
   Bsym_cond  : as Bsym but P drawn only from delays admissible for that negative
                (P <= T - r), so no truncation
-  lag_k      : pos t = e - k ; neg conditional pseudo-cutoff from (e - k - r)
+  lag_k      : pos t = max(e - k, r + L) ; neg pseudo-cutoff from (t - r)
   B->A       : model trained on B features, holdout scored with day-60 features
   Bsym_rs    : negatives borrow delays of training positives from the same
                entry-time stratum (risk-set / incidence-density matching)
@@ -197,7 +197,7 @@ def run_cohort(d, cohort, rng, seed):
     t_rs, trunc_rs = pseudo_rs(delays, r[pos_tr], r, T, rng)
     cut["Bsym_rs"] = np.where(y == 1, e, t_rs)
     for k in LAGS:
-        tp = np.maximum(e - k, r + 1)
+        tp = np.maximum(e - k, r + L)          # floored at the day-L landmark
         dl = tp[pos_tr] - r[pos_tr]
         t_k, _ = pseudo_rs(dl, r[pos_tr], r, T, rng)
         cut[f"lag{k}"] = np.where(y == 1, tp, t_k)
