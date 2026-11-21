@@ -22,7 +22,7 @@ On identical customers, labels and train/holdout splits, ELAPS refits the same l
 | **B** | up to the event e(c) | up to the cohort endpoint T(c) | event-anchored historical rule (diagnostic) |
 | **B-sym** | up to e(c) | up to min(r(c) + P(c), T(c)), P(c) drawn from **training** positives' delays | duration-matched diagnostic |
 | **B-sym-rs** | up to e(c) | as B-sym, P(c) drawn within the same relationship-start decile | entry-time matched diagnostic |
-| **lag-k** | up to e(c) − k | entry-time matched to the shifted delays | probe for event-proximate information |
+| **lag-k** | up to max(e(c) − k, r(c) + 60) | entry-time matched to the shifted delays | probe for event-proximate information |
 | **B→A** | model fitted on B, holdout scored with A features | | what a historically trained model gives at day 60 |
 
 ```text
@@ -79,6 +79,7 @@ Notebook comments are partly in Vietnamese. Paths in the notebooks point to Goog
    - *BƯỚC 1* and *BƯỚC 1b* rebuild Branch B with the Branch A pipeline and write `VIB_FLDC_60D_B_REBUILT.csv` (check: AUC 0.922914, 0 mismatches against stored Branch A).
    - *VIB60ABC — A / B / B-sym + R50 + H=180* and `run_all()`: four-learner R50.
    - *BƯỚC 3: TABLE 5*: Table 5.
+   - *ELAPS — REVISION RUNS (VIB)*, after *RUN_AUDIT*: lag curve with cutoffs floored at day 60 (S24), calibration-in-the-large for B→A, and four-learner R50 in H180 (S22). These supersede the unfloored lag values printed by *RUN_AUDIT*.
 3. `13_VIB60ABC.ipynb`, Section B: H180 A / B-sym / B.
 
 **Santander**
@@ -123,8 +124,8 @@ Compare branches **within** a cohort; differences between cohorts are not paired
 | B − B-sym | −0.000547 | −0.0025 – 0.0014 |
 
 - 40.1% of negative B-sym pseudo-cutoffs are truncated at the endpoint (KS 0.189); B-sym-rs: 17.2% (KS 0.175), AUC 0.923381.
-- Lag curve, contrast with A: lag-7 0.0107 (0.0061 – 0.0158), lag-30 0.0067 (0.0019 – 0.0115), lag-60 0.0026 (−0.0042 – 0.0096).
-- B→A: AUC 0.905515, BSS 0.188 vs 0.216 for A.
+- Lag curve (cutoffs floored at day 60), contrast with A: lag-7 0.0109 (0.0062 – 0.0159), lag-30 0.0079 (0.0037 – 0.0127), lag-60 0.0042 (0.0006 – 0.0086); share of positives floored 7.3% / 25.0% / 43.4% (S24).
+- B→A: AUC 0.905515, BSS 0.188 vs 0.216 for A; mean predicted probability 0.0489 vs prevalence 0.0463.
 - **Feature-pipeline equivalence.** The legacy Branch B matrix (`VIB_FLDC_60D.csv`) came from the historical extract and used different aggregation rules (no lower bound at relationship start, non-adopter window ending one month earlier, different transaction mode, latest-balance rule, missing-level coding and age). It gave AUC 0.960688 and B − A = 0.050446. Rebuilt with the Branch A pipeline, Branch B loses 0.0378 AUC (0.0312 – 0.0448).
 
 **VIB H180, equal 180-day follow-up** — 31,149 customers; holdout 6,230 (291 events) (Table 6)
@@ -134,8 +135,9 @@ Compare branches **within** a cohort; differences between cohorts are not paired
 | AUC A / B-sym / B | 0.891002 / 0.903415 / 0.906161 |
 | B − A | 0.0152 (0.0045 – 0.0264) |
 | B − B-sym | 0.0027 (−0.0032 – 0.0083) |
-| Lag-30 − A | 0.0019 (−0.0075 – 0.0103) |
-| B→A | AUC 0.8858, BSS 0.086 vs 0.140 for A |
+| Lag-7 / 30 / 60 − A (floored at day 60) | 0.0089 (0.0001 – 0.0192) / 0.0076 (−0.0006 – 0.0162) / 0.0020 (−0.0056 – 0.0103) |
+| Share of positives floored | 4.3% / 14.4% / 26.6% |
+| B→A | AUC 0.8858, BSS 0.086 vs 0.140 for A; mean predicted probability 0.0525 vs prevalence 0.0467 |
 
 No negative pseudo-cutoff is truncated in this cohort.
 
@@ -150,6 +152,15 @@ No negative pseudo-cutoff is truncated in this cohort.
 
 B − A and B-sym − A are positive in all 50 runs for every learner. XGBoost Kendall tau-b: 0.780 (A, B), 0.812 (A, B-sym).
 
+**Four learners × 50 split/refit runs, VIB H180** (S22; cell *ELAPS — REVISION RUNS* in `13`)
+
+| Learner | mean B − A (runs > 0) | mean B-sym − A (runs > 0) | mean B − B-sym |
+|---|---:|---:|---:|
+| Logistic regression | 0.0065 (47/50) | 0.0140 (50/50) | −0.0075 |
+| Random forest | 0.0257 (50/50) | 0.0236 (50/50) | 0.0022 |
+| LightGBM | 0.0148 (49/50) | 0.0153 (50/50) | −0.0005 |
+| XGBoost | 0.0129 (50/50) | 0.0147 (50/50) | −0.0018 |
+
 **Santander first year** — S0: 153,399 customers, 916 events; S1: 139,067 customers, 916 events (Table 8)
 
 | | A | B-sym | B | B − A |
@@ -158,10 +169,10 @@ B − A and B-sym − A are positive in all 50 runs for every learner. XGBoost K
 | S1 | 0.876453 | 0.894911 | 0.976517 | 0.1001 (0.0847 – 0.1160) |
 
 - Removing tenure (`antiguedad`) halves B − A on S0 (0.0866 → 0.0422); without age and tenure B − A = 0.0499 (0.0343 – 0.0644) and B-sym − A includes zero (S21).
-- Lag one month − A: 0.0004 (−0.0107 – 0.0132); B→A: AUC 0.8417 and BSS −14.99 vs 0.8856 and 0.0165 for A.
+- Lag cutoffs are not floored at day 60 for Santander and are not interpreted. B→A: AUC 0.8417 and BSS −14.99 vs 0.8856 and 0.0165 for A.
 - In four learners × 50 refits, B − A is positive in all runs (S17).
 
-**Synthetic positive control** (Table 10, Figure 4): with no signal, Branch B reaches AUC 0.99 under equal follow-up; B-sym and B-sym-rs restore 0.50 only when follow-up is fixed; a 30-day pre-adoption ramp survives duration matching but disappears at lag 30.
+**Synthetic positive control** (Table 10, Figure 4): with no signal, Branch B reaches AUC 0.99 under equal follow-up; B-sym and B-sym-rs restore 0.50 only when follow-up is fixed; a 30-day pre-adoption ramp survives duration matching (0.757) and falls to 0.519 at lag 30 (H180, lag cutoffs floored at day 60).
 
 ---
 
@@ -190,7 +201,7 @@ Identifiers, eligibility dates, outcomes and audit timestamps are never predicto
 | Same IDs, labels and splits across branches | yes | yes |
 | One feature pipeline reproducing stored Branch A | yes (0 mismatches) | yes (0 mismatches) |
 | Paired bootstrap | day-60 and H180 | S0, S1 |
-| Four learners × 50 refits | day-60 | S0 |
+| Four learners × 50 refits | day-60 and H180 | S0 |
 | Fixed-horizon (H180) cohort | yes | no |
 | B-sym duration balance | day-60 and H180 | no |
 | B-sym-rs, lag curve, B→A | day-60 and H180 | S0 |
@@ -204,7 +215,7 @@ A diagnostic that was not run is not evidence that the risk is absent.
 ## 7. Data and responsible use
 
 - Both datasets are public on Kaggle and are **not redistributed**; download them and update the paths in the notebooks.
-- The VIB-labelled data are a third-party upload whose sampling is undocumented; they are not a representative sample of the bank's customers.
+- Both datasets are public samples; results should not be generalised to a bank or the wider banking population without external validation.
 - Santander targets are a monthly ownership-status proxy, not verified card-opening dates.
 - The models estimate observed adoption propensity. Nothing here establishes causal effects, marketing uplift or production readiness.
 
