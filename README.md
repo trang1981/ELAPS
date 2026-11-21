@@ -5,7 +5,7 @@ Code and reproducibility materials for:
 > **Auditing Outcome-Dependent Prediction Times in Machine Learning: Paired Feature-Window Contrasts for Retail-Banking Propensity Scoring**
 > Ngo Thi Thu Trang, Tran Thu Trang and Ha-Nam Nguyen. Submitted to *PeerJ Computer Science* (2026).
 
-**Code archive (Zenodo):** https://doi.org/10.5281/zenodo.24302412
+**Code archive (Zenodo):** version 1.2.0, https://doi.org/10.5281/zenodo.24413578 (all versions: https://doi.org/10.5281/zenodo.24297945)
 **Data:** [VIB-labelled Datathon dataset](https://www.kaggle.com/datasets/onamihoang/datathon-vib-vn) · [Santander Product Recommendation](https://www.kaggle.com/competitions/santander-product-recommendation) (not redistributed here)
 
 ---
@@ -218,9 +218,10 @@ A diagnostic that was not run is not evidence that the risk is absent.
   title     = {ELAPS: Code for "Auditing Outcome-Dependent Prediction Times in Machine Learning:
                Paired Feature-Window Contrasts for Retail-Banking Propensity Scoring"},
   year      = {2026},
+  version   = {1.2.0},
   publisher = {Zenodo},
-  doi       = {10.5281/zenodo.24302412},
-  url       = {https://doi.org/10.5281/zenodo.24302412}
+  doi       = {10.5281/zenodo.24413578},
+  url       = {https://doi.org/10.5281/zenodo.24413578}
 }
 ```
 
