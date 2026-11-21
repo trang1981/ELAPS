@@ -63,6 +63,7 @@ ELAPS/
 | `14_VIB_FLDC_60D_B.ipynb`, `15_VIB_FLDC_60D_C.ipynb` | legacy | earlier Branch B / C matrices from the historical extract; not used in reported results |
 | `16_SantanderABC.ipynb` | supplementary | Santander Branch C stress test (S20) |
 | `17_VIB_Dwindow_Refit_20Seeds.ipynb`, `18_VIB_FixedHorizon_H180_A60_B240.ipynb` | superseded | earlier refits and H180 A/B, kept for transparency |
+| `19_Santander_60D_ABsym_R50.ipynb` | **canonical** | Santander S0/S1 A / B-sym / B with paired bootstrap, four-learner R50 and Kendall tau-b (Table 8, S15–S17) |
 
 Notebook comments are partly in Vietnamese. Paths in the notebooks point to Google Drive; edit them before running elsewhere.
 
@@ -83,7 +84,8 @@ Notebook comments are partly in Vietnamese. Paths in the notebooks point to Goog
 **Santander**
 
 1. `11_Santander_FLDC_60D.ipynb`: first-year cohort (S0, S1).
-2. `09_Santander_ELAPS.ipynb`: age/tenure ablation and the Santander probes.
+2. `19_Santander_60D_ABsym_R50.ipynb`: A / B-sym / B for S0 and S1, paired bootstrap, R50 and Kendall tau-b; writes the run folders read by `09`.
+3. `09_Santander_ELAPS.ipynb`: age/tenure ablation and the Santander probes.
 
 **Synthetic positive control** (no third-party data needed)
 
